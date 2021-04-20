@@ -10,37 +10,13 @@ namespace NetsLab1
         const int FRAMESCOUNT = 4;
         public BitArray[] framesArray = new BitArray[FRAMESCOUNT];
 
-        public static bool ValidData(BitArray _frame)
+        public static bool ValidData(BitArray frame)
         {            
-            BitArray dataReceived = GetFrameData(_frame);
-            BitArray expectedParity = GetExpectedFrameParity(_frame);
-            BitArray receivedParity = new BitArray(Frame.PARITYBLOCKBITSCOUNT);
-
-            //vertical parity check
-            for (int i = 0; i < 8; i++)
-            {
-                int columnBitsSum = 0;
-                for (int j = i; j < dataReceived.Length; j += 8)
-                {
-                    if (dataReceived[j] == true)
-                    {
-                        columnBitsSum += 1;
-                    }
-                }
-
-                if (columnBitsSum % 2 != 0)
-                {
-                    receivedParity[i] = true;
-                }
-                else
-                {
-                    receivedParity[i] = false;
-                }
-            }
-
-
-
-            for (int i = _frame.Length - 1; i > _frame.Length - 8; i--)
+            BitArray receivedData = GetFrameData(frame);
+            BitArray expectedParity = GetExpectedFrameParity(frame);
+            BitArray receivedParity = CalculateFrameParity(receivedData);
+            
+            for (int i = frame.Length - 1; i > frame.Length - 8; i--)
             {
                 if(receivedParity[i] != expectedParity[i])
                 {
@@ -52,15 +28,43 @@ namespace NetsLab1
         }
 
 
-        public static BitArray GetExpectedFrameParity(BitArray _frame)
+        public static BitArray GetExpectedFrameParity(BitArray frame)
         {
             BitArray parity = new BitArray(Frame.PARITYBLOCKBITSCOUNT);
-            for(int i = _frame.Length - 1; i > _frame.Length - 8; i--)
+            for(int i = frame.Length - 1; i > frame.Length - 8; i--)
             {
-                parity[i] = _frame[i];
+                parity[i] = frame[i];
             }
 
             return parity;
+        }
+
+        public static BitArray CalculateFrameParity(BitArray receivedData)
+        {
+            BitArray calculatedParity = new BitArray(Frame.PARITYBLOCKBITSCOUNT);
+
+            for (int i = 0; i < 8; i++)
+            {
+                int columnBitsSum = 0;
+                for (int j = i; j < receivedData.Length; j += 8)
+                {
+                    if (receivedData[j] == true)
+                    {
+                        columnBitsSum += 1;
+                    }
+                }
+
+                if (columnBitsSum % 2 != 0)
+                {
+                    calculatedParity[i] = true;
+                }
+                else
+                {
+                    calculatedParity[i] = false;
+                }
+            }
+
+            return calculatedParity;
         }
 
         public static BitArray GetFrameData(BitArray _frame)

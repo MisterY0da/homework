@@ -14,9 +14,51 @@ namespace NetsLab1
         public Frame(BitArray data)
         {
             BitArray binaryDataSize = DecimalToBinary(data.Length);
-            bool[] verticalParity = new bool[PARITYBLOCKBITSCOUNT];
+            bool[] verticalParity = GetVerticalParity(data);
 
-            //vertical parity check
+            _frame = FillFrame(data, binaryDataSize, verticalParity);           
+        }
+
+
+        public static BitArray DecimalToBinary(int decimalNumber)
+        {
+            BitArray binaryNumber = new BitArray(DATASIZEBLOCKBITSCOUNT, false);
+            for (int i = 0; i < binaryNumber.Length; i++)
+            {
+                if (decimalNumber % 2 == 1)
+                {
+                    binaryNumber[(binaryNumber.Length - 1) - i] = true;
+                }
+                decimalNumber /= 2;
+            }
+
+            return binaryNumber;
+        }
+
+        private BitArray FillFrame(BitArray data, BitArray binaryDataSize, bool[] verticalParity)
+        {
+            for (int i = 0; i < data.Length; i++)
+            {
+                _frame[i] = data[i];
+            }
+
+            for (int i = data.Length; i < data.Length + binaryDataSize.Length; i++)
+            {
+                _frame[i] = binaryDataSize[i];
+            }
+
+            for (int i = data.Length + binaryDataSize.Length;
+                i < data.Length + binaryDataSize.Length + verticalParity.Length; i++)
+            {
+                _frame[i] = verticalParity[i];
+            }
+
+            return _frame;
+        }
+
+        private bool[] GetVerticalParity(BitArray data)
+        {
+            bool[] verticalParity = new bool[PARITYBLOCKBITSCOUNT];
             for (int i = 0; i < PARITYBLOCKBITSCOUNT; i++)
             {
                 int columnBitsSum = 0;
@@ -38,41 +80,8 @@ namespace NetsLab1
                 }
             }
 
-            //fill the frame
-            for (int i = 0; i < data.Length; i++)
-            {
-                _frame[i] = data[i];
-            }
-
-            for (int i = data.Length; i < data.Length + binaryDataSize.Length; i++)
-            {
-                _frame[i] = binaryDataSize[i];
-            }
-
-            for (int i = data.Length + binaryDataSize.Length;
-                i < data.Length + binaryDataSize.Length + verticalParity.Length; i++)
-            {
-                _frame[i] = verticalParity[i];
-            }
-
+            return verticalParity;
         }
-
-
-        public static BitArray DecimalToBinary(int decimalNumber)
-        {
-            BitArray binaryNumber = new BitArray(DATASIZEBLOCKBITSCOUNT, false);
-            for (int i = 0; i < binaryNumber.Length; i++)
-            {
-                if (decimalNumber % 2 == 1)
-                {
-                    binaryNumber[(binaryNumber.Length - 1) - i] = true;
-                }
-                decimalNumber /= 2;
-            }
-
-            return binaryNumber;
-        }
-
 
         public BitArray GetFrame()
         {

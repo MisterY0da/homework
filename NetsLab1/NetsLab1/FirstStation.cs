@@ -8,29 +8,40 @@ namespace NetsLab1
 {
     public class FirstStation
     {
-        private Semaphore _semaphore;
+        private Semaphore _mainSemaphore;
+        private Semaphore _giveReceiptSem;
+        private Semaphore _askReceiptSem;
+
         private BitArray _receivedMessage;
         private BitArray _sendMessage;
         private PostToSecondWT _post;
 
-        private PostReceiptToSecond _postReceipt;
+        private PostReceiptToSecondWT _postReceipt;
         private BitArray _receivedReceipt;
         private BitArray _sendReceipt;
 
         private bool _receivedMesShown = false;
 
-        public FirstStation(ref Semaphore semaphore)
+        public FirstStation(ref Semaphore semaphore, ref Semaphore giveReceiptSem, ref Semaphore askReceiptSem)
         {
-            _semaphore = semaphore;
+            _mainSemaphore = semaphore;
+            _giveReceiptSem = giveReceiptSem;
+            _askReceiptSem = askReceiptSem;
         }
 
-
-
-        public void FirstThreadMain(object obj)
+        public void FirstStationReceipt(object obj)
         {
-            _postReceipt = (PostReceiptToSecond)obj;
+            _postReceipt = (PostReceiptToSecondWT)obj;
             _sendReceipt = new BitArray(1);
 
+            _giveReceiptSem.WaitOne();
+            _sendReceipt[0] = true;
+            _postReceipt(_sendReceipt);
+            _giveReceiptSem.Release();
+        }
+
+        public void FirstStationMessage(object obj)
+        {           
             _post = (PostToSecondWT)obj;
             _sendMessage = new BitArray(56);
             for (int i = 0; i < 56; i++)
@@ -45,39 +56,49 @@ namespace NetsLab1
             ConsoleHelper.WriteToConsole("1 станция", "Начинаю работу.");
 
 
-            _semaphore.WaitOne();
+            _mainSemaphore.WaitOne();
             if (_receivedMessage != null)
-            {
-                ConsoleHelper.WriteToConsole("1 станция ", "Данные получены.");
-                _sendReceipt[0] = true;
-                _postReceipt(_sendReceipt);
+            {                
                 ConsoleHelper.WriteToConsoleArray("1 станция полученные данные", _receivedMessage);
                 _receivedMesShown = true;
 
-                ConsoleHelper.WriteToConsole("1 станция", "Готовлю данные для передачи.");
+                
                 _post(_sendMessage);
-                ConsoleHelper.WriteToConsole("1 станция", "Данные переданы.");
+                ConsoleHelper.WriteToConsole("1 станция", "Отправил данные.");
+
+                _askReceiptSem.Release();
+                
+
+                _askReceiptSem.WaitOne();
                 ConsoleHelper.WriteToConsoleArray("1 станция полученная квитанция", _receivedReceipt);
+                ConsoleHelper.WriteToConsole("1 станция", "Данные дошли до получателя.");
+                _askReceiptSem.Release();
             }
             else
             {
-                ConsoleHelper.WriteToConsole("1 станция", "Готовлю данные для передачи.");
+                
                 _post(_sendMessage);
-                ConsoleHelper.WriteToConsole("1 станция", "Данные переданы.");
-                ConsoleHelper.WriteToConsoleArray("1 станция полученная квитанция", _receivedReceipt);
-                ConsoleHelper.WriteToConsole("1 станция", "Жду передачи данных.");
-            }
-            _semaphore.Release();
+                ConsoleHelper.WriteToConsole("1 станция", "Отправил данные.");
 
-            _semaphore.WaitOne();
+                _askReceiptSem.Release();
+                
+
+                _askReceiptSem.WaitOne();
+                ConsoleHelper.WriteToConsoleArray("1 станция полученная квитанция", _receivedReceipt);
+                ConsoleHelper.WriteToConsole("1 станция", "Данные дошли до получателя.");
+                _askReceiptSem.Release();
+
+                ConsoleHelper.WriteToConsole("1 станция", "Жду ответа.");
+            }
+            _mainSemaphore.Release();
+
+            _mainSemaphore.WaitOne();
             if (_receivedMesShown == false)
             {
-                ConsoleHelper.WriteToConsole("1 станция ", "Данные получены.");
-                _sendReceipt[0] = true;
-                _postReceipt(_sendReceipt);
                 ConsoleHelper.WriteToConsoleArray("1 станция полученные данные", _receivedMessage);
             }
-            _semaphore.Release();
+            _mainSemaphore.Release();
+
 
             ConsoleHelper.WriteToConsole("1 станция", "Завершаю работу.");
         }

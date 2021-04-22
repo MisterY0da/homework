@@ -6,19 +6,35 @@ using System.Text;
 namespace NetsLab1
 {
     public class Frame
-    {
-        private BitArray _frame;
+    {        
         public const int DATASIZEBLOCKBITSCOUNT = 7;
         public const int PARITYBLOCKBITSCOUNT = 8;
 
-        public Frame(BitArray data)
+        public static BitArray FillFrame(BitArray data)
         {
             BitArray binaryDataSize = DecimalToBinary(data.Length);
             bool[] verticalParity = GetVerticalParity(data);
+            int frameLength = data.Length + binaryDataSize.Length + verticalParity.Length;
+            BitArray frame = new BitArray(frameLength);
 
-            _frame = FillFrame(data, binaryDataSize, verticalParity);           
+            for (int i = 0; i < data.Length; i++)
+            {
+                frame[i] = data[i];
+            }
+
+            for (int i = data.Length; i < data.Length + binaryDataSize.Length; i++)
+            {
+                frame[i] = binaryDataSize[i - data.Length];
+            }
+
+            for (int i = data.Length + binaryDataSize.Length;
+                i < data.Length + binaryDataSize.Length + verticalParity.Length; i++)
+            {
+                frame[i] = verticalParity[i - data.Length - binaryDataSize.Length];
+            }
+
+            return frame;
         }
-
 
         public static BitArray DecimalToBinary(int decimalNumber)
         {
@@ -35,28 +51,7 @@ namespace NetsLab1
             return binaryNumber;
         }
 
-        private BitArray FillFrame(BitArray data, BitArray binaryDataSize, bool[] verticalParity)
-        {
-            for (int i = 0; i < data.Length; i++)
-            {
-                _frame[i] = data[i];
-            }
-
-            for (int i = data.Length; i < data.Length + binaryDataSize.Length; i++)
-            {
-                _frame[i] = binaryDataSize[i];
-            }
-
-            for (int i = data.Length + binaryDataSize.Length;
-                i < data.Length + binaryDataSize.Length + verticalParity.Length; i++)
-            {
-                _frame[i] = verticalParity[i];
-            }
-
-            return _frame;
-        }
-
-        private bool[] GetVerticalParity(BitArray data)
+        public static bool[] GetVerticalParity(BitArray data)
         {
             bool[] verticalParity = new bool[PARITYBLOCKBITSCOUNT];
             for (int i = 0; i < PARITYBLOCKBITSCOUNT; i++)
@@ -81,11 +76,6 @@ namespace NetsLab1
             }
 
             return verticalParity;
-        }
-
-        public BitArray GetFrame()
-        {
-            return _frame;
         }
     }
 }

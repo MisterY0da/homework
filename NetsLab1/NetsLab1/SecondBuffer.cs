@@ -8,7 +8,7 @@ namespace NetsLab1
 {
     public class SecondBuffer
     {
-        const int FRAMESCOUNT = 4;
+        public const int FRAMESCOUNT = 4;
         public BitArray[] framesArray = new BitArray[FRAMESCOUNT];
 
         private Semaphore _signalFromFirst;
@@ -16,12 +16,12 @@ namespace NetsLab1
         private Semaphore _signalFromSecond;
         private Semaphore _signalToFirst;
 
-        private BitArray _receivedFrame;
-        private BitArray _sentFrame;
+        private BitArray[] _receivedFrames;
+        private BitArray[] _sentFrames;
         private BitArray _receivedReceipt;
         private BitArray _sentReceipt;
 
-        private PostDataToSecondWt _postFrame;
+        private PostDataToSecondWt _postFrames;
         private PostReceiptToFirstWt _postReceipt;
 
 
@@ -46,20 +46,20 @@ namespace NetsLab1
             _signalToFirst.Release();
         }
 
-        public void SendFrameToSecond(object obj)
+        public void SendFramesToSecond(object obj)
         {
-            _postFrame = (PostDataToSecondWt)obj;
+            _postFrames = (PostDataToSecondWt)obj;
 
             _signalFromFirst.WaitOne();
-            _sentFrame = _receivedFrame;
-            _postFrame(_sentFrame);
-            ConsoleHelper.WriteToConsole("буфер 2", "отправил кадр станции 2");
+            _sentFrames = _receivedFrames;
+            _postFrames(_sentFrames);
+            ConsoleHelper.WriteToConsole("буфер 2", "отправил кадры станции 2");
             _signalToSecond.Release();
         }
 
-        public void ReceiveFrame(BitArray frame)
+        public void ReceiveFrames(BitArray[] frames)
         {
-            _receivedFrame = frame;
+            _receivedFrames = frames;
         }
 
         public void ReceiveReceipt(BitArray receipt)

@@ -15,12 +15,12 @@ namespace NetsLab1
         private Semaphore _signalFromFirstBuffer;
 
         private PostDataToFirstBufferWt _postFrame;
-        private BitArray _sentFrame;
+        private BitArray[] _sentFrames;
         private BitArray _receivedReceipt;
 
         private PostReceiptToSecondBufferWt _postReceipt;
         private BitArray _sentReceipt;
-        private BitArray _receivedFrame;
+        private BitArray[] _receivedFrames;
 
         public SecondStation(ref Semaphore signalFromSecondBuffer, ref Semaphore signalToSecondBuffer, 
             ref Semaphore signalToFirstBuffer, ref Semaphore signalFromFirstBuffer, ref Semaphore mainSemaphore)
@@ -32,21 +32,17 @@ namespace NetsLab1
             _mainSemaphore = mainSemaphore;
         }
 
-        public void SendFrameToFirst(object obj)
+        public void SendFramesToFirst(object obj)
         {
+            _sentFrames = new BitArray[SecondBuffer.FRAMESCOUNT];
+            GenerateSomeFrames();
+
             _mainSemaphore.WaitOne();
             _postFrame = (PostDataToFirstBufferWt)obj;
-            _sentFrame = new BitArray(16);
-            for (int i = 0; i < 16; i++)
-            {
-                if (i % 2 == 0)
-                    _sentFrame[i] = false;
-                else
-                    _sentFrame[i] = true;
-            }
+            
 
-            _postFrame(_sentFrame);
-            ConsoleHelper.WriteToConsole("станция 2", "отправил кадр буферу 1");
+            _postFrame(_sentFrames);
+            ConsoleHelper.WriteToConsole("станция 2", "отправил кадры буферу 1");
             _signalToFirstBuffer.Release();
 
             _signalFromFirstBuffer.WaitOne();
@@ -61,16 +57,19 @@ namespace NetsLab1
             _sentReceipt = new BitArray(1);
 
             _signalFromSecondBuffer.WaitOne();
-            ConsoleHelper.WriteToConsoleArray("станция 2 принятый кадр", _receivedFrame);
+            for (int i = 0; i < _receivedFrames.Length; i++)
+            {
+                ConsoleHelper.WriteToConsoleArray("станция 2 полученный кадр №" + i, _receivedFrames[i]);
+            }
             _sentReceipt[0] = true;
             _postReceipt(_sentReceipt);
             ConsoleHelper.WriteToConsole("станция 2", "отправил квитанцию буферу 2");
             _signalToSecondBuffer.Release();
         }
 
-        public void ReceiveFrame(BitArray frame)
+        public void ReceiveFrames(BitArray[] frames)
         {
-            _receivedFrame = frame;
+            _receivedFrames = frames;
         }
 
         public void ReceiveReceipt(BitArray receipt)
@@ -79,28 +78,62 @@ namespace NetsLab1
         }
 
 
+        public void GenerateSomeFrames()
+        {
+            BitArray someData = GenerateSomeData(100);
+            BitArray firstFrameData = new BitArray(20);
+            BitArray secondFrameData = new BitArray(20);
+            BitArray thirdFrameData = new BitArray(30);
+            BitArray forthFrameData = new BitArray(30);
 
+            for (int i = 0; i < firstFrameData.Length; i++)
+            {
+                firstFrameData[i] = someData[i];
+            }
 
+            for (int i = 0; i < secondFrameData.Length; i++)
+            {
+                secondFrameData[i] = someData[i + firstFrameData.Length];
+            }
 
+            for (int i = 0; i < thirdFrameData.Length; i++)
+            {
+                thirdFrameData[i] = someData[i + firstFrameData.Length + secondFrameData.Length];
+            }
 
+            for (int i = 0; i < forthFrameData.Length; i++)
+            {
+                forthFrameData[i] = someData[i + firstFrameData.Length + secondFrameData.Length + thirdFrameData.Length];
+            }
 
+            BitArray frame1 = Frame.FillFrame(firstFrameData);
+            BitArray frame2 = Frame.FillFrame(secondFrameData);
+            BitArray frame3 = Frame.FillFrame(thirdFrameData);
+            BitArray frame4 = Frame.FillFrame(forthFrameData);
 
+            _sentFrames[0] = frame1;
+            _sentFrames[1] = frame2;
+            _sentFrames[2] = frame3;
+            _sentFrames[3] = frame4;
+        }
 
+        public BitArray GenerateSomeData(int bitsCount)
+        {
+            BitArray someData = new BitArray(bitsCount);
+            for (int i = 0; i < 100; i++)
+            {
+                if (i % 3 == 0 || i % 4 == 0)
+                {
+                    someData[i] = true;
+                }
+                else
+                {
+                    someData[i] = false;
+                }
+            }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+            return someData;
+        }
 
         public static bool ValidData(BitArray frame)
         {

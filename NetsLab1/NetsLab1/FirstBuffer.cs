@@ -8,8 +8,8 @@ namespace NetsLab1
 {
     public class FirstBuffer
     {
-        /*const int FRAMESCOUNT = 4;
-        public BitArray[] framesArray = new BitArray[FRAMESCOUNT];*/
+        const int FRAMESCOUNT = 4;
+        public BitArray[] framesArray = new BitArray[FRAMESCOUNT];
 
         private Semaphore _signalFromSecond;
         private Semaphore _signalToFirst;

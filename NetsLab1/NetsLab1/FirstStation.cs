@@ -8,6 +8,7 @@ namespace NetsLab1
 {
     public class FirstStation
     {
+        private Semaphore _mainSemaphore;
         private Semaphore _signalToSecondBuffer;
         private Semaphore _signalFromSecondBuffer;
         private Semaphore _signalToFirstBuffer;
@@ -23,22 +24,21 @@ namespace NetsLab1
         private BitArray _receivedFrame;
 
 
-
-        //private bool _receivedDataShown = false;
-
         public FirstStation(ref Semaphore signalToSecondBuffer, ref Semaphore signalFromSecondBuffer, 
-            ref Semaphore signalToFirstBuffer, ref Semaphore signalFromFirstBuffer)
+            ref Semaphore signalToFirstBuffer, ref Semaphore signalFromFirstBuffer, ref Semaphore mainSemaphore)
         {
             _signalToSecondBuffer = signalToSecondBuffer;
             _signalFromSecondBuffer = signalFromSecondBuffer;
             _signalToFirstBuffer = signalToFirstBuffer;
             _signalFromFirstBuffer = signalFromFirstBuffer;
+            _mainSemaphore = mainSemaphore;
         }
 
 
 
         public void SendFrameToSecond(object obj)
-        {           
+        {
+            _mainSemaphore.WaitOne();
             _postFrame = (PostDataToSecondBufferWt)obj;
             _sentFrame = new BitArray(16);
             for (int i = 0; i < 16; i++)
@@ -49,19 +49,14 @@ namespace NetsLab1
                     _sentFrame[i] = false;
             }
 
-            ConsoleHelper.WriteToConsole("станция 1", "начинаю работу.");
-
             _postFrame(_sentFrame);
 
             ConsoleHelper.WriteToConsole("станция 1", "отправил кадр буферу 2");
             _signalToSecondBuffer.Release();
 
             _signalFromSecondBuffer.WaitOne();
-            ConsoleHelper.WriteToConsoleArray("станция 1 квитанция", _receivedReceipt);
-
-
-            ConsoleHelper.WriteToConsole("станция 1", "Завершаю работу.");
-
+            ConsoleHelper.WriteToConsoleArray("станция 1 полученная квитанция", _receivedReceipt);
+            _mainSemaphore.Release();
         }
 
         public void SendReceiptToFirstBuffer(Object obj)
@@ -69,16 +64,12 @@ namespace NetsLab1
             _postReceipt = (PostReceiptToFirstBufferWt)obj;
             _sentReceipt = new BitArray(1);
 
-            ConsoleHelper.WriteToConsole("станция 1", "начинаю работу.");
-
             _signalFromFirstBuffer.WaitOne();
             ConsoleHelper.WriteToConsoleArray("станция 1 принятый кадр", _receivedFrame);
             _sentReceipt[0] = true;
             _postReceipt(_sentReceipt);
             ConsoleHelper.WriteToConsole("станция 1", "отправил квитанцию буферу 1");
             _signalToFirstBuffer.Release();
-
-            ConsoleHelper.WriteToConsole("станция 1", "Завершаю работу.");
         }
 
         public void ReceiveFrame(BitArray frame)

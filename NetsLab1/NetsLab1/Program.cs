@@ -21,6 +21,8 @@ namespace NetsLab1
         {
             ConsoleHelper.WriteToConsole("Главный поток", "");
 
+
+            Semaphore mainSemaphore = new Semaphore(1, 1);
             Semaphore dataSignalToSecondBuffer = new Semaphore(0, 1);
             Semaphore dataSignalToSecond = new Semaphore(0, 1);
             Semaphore receiptSignalToSecondBuffer = new Semaphore(0, 1);
@@ -32,9 +34,9 @@ namespace NetsLab1
             Semaphore receiptSignalToSecond = new Semaphore(0, 1);
 
 
-            FirstStation firstStation = new FirstStation(ref dataSignalToSecondBuffer, ref receiptSignalToFirst, ref receiptSignalToFirstBuffer, ref dataSignalToFirst);
+            FirstStation firstStation = new FirstStation(ref dataSignalToSecondBuffer, ref receiptSignalToFirst, ref receiptSignalToFirstBuffer, ref dataSignalToFirst, ref mainSemaphore);
             FirstBuffer firstBuffer = new FirstBuffer(ref dataSignalToFirstBuffer, ref dataSignalToFirst, ref receiptSignalToFirstBuffer, ref receiptSignalToSecond);            
-            SecondStation secondStation = new SecondStation(ref dataSignalToSecond, ref receiptSignalToSecondBuffer, ref dataSignalToFirstBuffer, ref receiptSignalToSecond);
+            SecondStation secondStation = new SecondStation(ref dataSignalToSecond, ref receiptSignalToSecondBuffer, ref dataSignalToFirstBuffer, ref receiptSignalToSecond, ref mainSemaphore);
             SecondBuffer secondBuffer = new SecondBuffer(ref dataSignalToSecondBuffer, ref dataSignalToSecond, ref receiptSignalToSecondBuffer, ref receiptSignalToFirst);
 
 
@@ -61,10 +63,10 @@ namespace NetsLab1
             PostReceiptToSecondWt postReceiptToSecondtWt = new PostReceiptToSecondWt(secondStation.ReceiveReceipt);
 
 
-            /*firstThread.Start(postDataToSecondBufferWt);
+            firstThread.Start(postDataToSecondBufferWt);
             secondThread.Start(postDataToSecondWt);
             thirdThread.Start(postReceiptToSecondBufferWt);
-            forthThread.Start(postReceiptToFirstWt);*/
+            forthThread.Start(postReceiptToFirstWt);
 
 
             fifthThread.Start(postDataToFirstBufferWt);

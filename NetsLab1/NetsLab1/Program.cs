@@ -4,47 +4,74 @@ using System.Threading;
 
 namespace NetsLab1
 {
-    public delegate void PostToFirstWT(BitArray message);
-    public delegate void PostToSecondWT(BitArray message);
+    public delegate void PostDataToSecondBufferWt(BitArray frame);
+    public delegate void PostDataToSecondWt(BitArray frame);
+    public delegate void PostReceiptToSecondBufferWt(BitArray receipt);
+    public delegate void PostReceiptToFirstWt(BitArray receipt);
 
-    /*public delegate void PostDataToFirstBufferWT(BitArray message);
-    public delegate void PostDataToSecondBufferWT(BitArray message);
-    public delegate void PostDataToFirstWT(BitArray message);
-    public delegate void PostDataToSecondWT(BitArray message);*/
 
-    public delegate void PostReceiptToFirstWT(BitArray message);
-    public delegate void PostReceiptToSecondWT(BitArray message);
+    public delegate void PostDataToFirstBufferWt(BitArray frame);
+    public delegate void PostDataToFirstWt(BitArray frame);
+    public delegate void PostReceiptToFirstBufferWt(BitArray receipt);
+    public delegate void PostReceiptToSecondWt(BitArray receipt);
+
     public class Program
     {
         static void Main(string[] args)
         {
             ConsoleHelper.WriteToConsole("Главный поток", "");
-            Semaphore semaphore = new Semaphore(1, 1);
-            Semaphore firstReceiptSem = new Semaphore(0, 1);
-            Semaphore secondReceiptSem = new Semaphore(0, 1);
 
-            FirstStation firstStation = new FirstStation(ref semaphore, ref firstReceiptSem, ref secondReceiptSem);
-            SecondStation secondStation = new SecondStation(ref semaphore, ref secondReceiptSem, ref firstReceiptSem);
+            Semaphore dataSignalToSecondBuffer = new Semaphore(0, 1);
+            Semaphore dataSignalToSecond = new Semaphore(0, 1);
+            Semaphore receiptSignalToSecondBuffer = new Semaphore(0, 1);
+            Semaphore receiptSignalToFirst = new Semaphore(0, 1);
 
-            Thread firstThread = new Thread(new ParameterizedThreadStart(firstStation.FirstStationMessage));
-            Thread secondThread = new Thread(new ParameterizedThreadStart(secondStation.SecondStationMessage));
-            Thread thirdThread = new Thread(new ParameterizedThreadStart(firstStation.FirstStationReceipt));
-            Thread forthThread = new Thread(new ParameterizedThreadStart(secondStation.SecondStationReceipt));
+            Semaphore dataSignalToFirstBuffer = new Semaphore(0, 1);
+            Semaphore dataSignalToFirst = new Semaphore(0, 1);
+            Semaphore receiptSignalToFirstBuffer = new Semaphore(0, 1);
+            Semaphore receiptSignalToSecond = new Semaphore(0, 1);
 
 
-            PostToFirstWT postToFirstWt = new PostToFirstWT(firstStation.ReceiveData);
-            PostToSecondWT postToSecondWt = new PostToSecondWT(secondStation.ReceiveData);
+            FirstStation firstStation = new FirstStation(ref dataSignalToSecondBuffer, ref receiptSignalToFirst, ref receiptSignalToFirstBuffer, ref dataSignalToFirst);
+            FirstBuffer firstBuffer = new FirstBuffer(ref dataSignalToFirstBuffer, ref dataSignalToFirst, ref receiptSignalToFirstBuffer, ref receiptSignalToSecond);            
+            SecondStation secondStation = new SecondStation(ref dataSignalToSecond, ref receiptSignalToSecondBuffer, ref dataSignalToFirstBuffer, ref receiptSignalToSecond);
+            SecondBuffer secondBuffer = new SecondBuffer(ref dataSignalToSecondBuffer, ref dataSignalToSecond, ref receiptSignalToSecondBuffer, ref receiptSignalToFirst);
 
-            PostReceiptToFirstWT postReceiptToFirstWt = new PostReceiptToFirstWT(firstStation.ReceiveReceipt);
-            PostReceiptToSecondWT postReceiptToSecondWt = new PostReceiptToSecondWT(secondStation.ReceiveReceipt);
 
-            firstThread.Start(postToSecondWt);
+            Thread firstThread = new Thread(new ParameterizedThreadStart(firstStation.SendFrameToSecond));
+            Thread secondThread = new Thread(new ParameterizedThreadStart(secondBuffer.SendFrameToSecond));
+            Thread thirdThread = new Thread(new ParameterizedThreadStart(secondStation.SendReceiptToSecondBuffer));
+            Thread forthThread = new Thread(new ParameterizedThreadStart(secondBuffer.SendReceiptToFirst));
 
-            secondThread.Start(postToFirstWt);
+            Thread fifthThread = new Thread(new ParameterizedThreadStart(secondStation.SendFrameToFirst));
+            Thread sixthThread = new Thread(new ParameterizedThreadStart(firstBuffer.SendFrameToFirst));
+            Thread seventhThread = new Thread(new ParameterizedThreadStart(firstStation.SendReceiptToFirstBuffer));
+            Thread eighthThread = new Thread(new ParameterizedThreadStart(firstBuffer.SendReceiptToSecond));
 
-            thirdThread.Start(postReceiptToSecondWt);
-            
-            forthThread.Start(postReceiptToFirstWt);
+
+            PostDataToSecondBufferWt postDataToSecondBufferWt = new PostDataToSecondBufferWt(secondBuffer.ReceiveFrame);
+            PostDataToSecondWt postDataToSecondWt = new PostDataToSecondWt(secondStation.ReceiveFrame);
+            PostReceiptToSecondBufferWt postReceiptToSecondBufferWt = new PostReceiptToSecondBufferWt(secondBuffer.ReceiveReceipt);
+            PostReceiptToFirstWt postReceiptToFirstWt = new PostReceiptToFirstWt(firstStation.ReceiveReceipt);
+
+
+            PostDataToFirstBufferWt postDataToFirstBufferWt = new PostDataToFirstBufferWt(firstBuffer.ReceiveFrame);
+            PostDataToFirstWt postDataToFirstWt = new PostDataToFirstWt(firstStation.ReceiveFrame);
+            PostReceiptToFirstBufferWt postReceiptToFirstBufferWt = new PostReceiptToFirstBufferWt(firstBuffer.ReceiveReceipt);
+            PostReceiptToSecondWt postReceiptToSecondtWt = new PostReceiptToSecondWt(secondStation.ReceiveReceipt);
+
+
+            /*firstThread.Start(postDataToSecondBufferWt);
+            secondThread.Start(postDataToSecondWt);
+            thirdThread.Start(postReceiptToSecondBufferWt);
+            forthThread.Start(postReceiptToFirstWt);*/
+
+
+            fifthThread.Start(postDataToFirstBufferWt);
+            sixthThread.Start(postDataToFirstWt);
+            seventhThread.Start(postReceiptToFirstBufferWt);
+            eighthThread.Start(postReceiptToSecondtWt);
+
 
             Console.ReadLine();
         }

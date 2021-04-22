@@ -8,108 +8,182 @@ namespace NetsLab1
 {
     public class FirstStation
     {
-        private Semaphore _mainSemaphore;
-        private Semaphore _giveReceiptSem;
-        private Semaphore _askReceiptSem;
+        private Semaphore _signalToSecondBuffer;
+        private Semaphore _signalFromSecondBuffer;
+        private Semaphore _signalToFirstBuffer;
+        private Semaphore _signalFromFirstBuffer;
 
-        private BitArray _receivedMessage;
-        private BitArray _sendMessage;
-        private PostToSecondWT _post;
-
-        private PostReceiptToSecondWT _postReceipt;
+        private PostDataToSecondBufferWt _postFrame;
+        private BitArray _sentFrame;
         private BitArray _receivedReceipt;
-        private BitArray _sendReceipt;
 
-        private bool _receivedMesShown = false;
 
-        public FirstStation(ref Semaphore semaphore, ref Semaphore giveReceiptSem, ref Semaphore askReceiptSem)
+        private PostReceiptToFirstBufferWt _postReceipt;
+        private BitArray _sentReceipt;
+        private BitArray _receivedFrame;
+
+
+
+        //private bool _receivedDataShown = false;
+
+        public FirstStation(ref Semaphore signalToSecondBuffer, ref Semaphore signalFromSecondBuffer, 
+            ref Semaphore signalToFirstBuffer, ref Semaphore signalFromFirstBuffer)
         {
-            _mainSemaphore = semaphore;
-            _giveReceiptSem = giveReceiptSem;
-            _askReceiptSem = askReceiptSem;
+            _signalToSecondBuffer = signalToSecondBuffer;
+            _signalFromSecondBuffer = signalFromSecondBuffer;
+            _signalToFirstBuffer = signalToFirstBuffer;
+            _signalFromFirstBuffer = signalFromFirstBuffer;
         }
 
-        public void FirstStationReceipt(object obj)
-        {
-            _postReceipt = (PostReceiptToSecondWT)obj;
-            _sendReceipt = new BitArray(1);
 
-            _giveReceiptSem.WaitOne();
-            _sendReceipt[0] = true;
-            _postReceipt(_sendReceipt);
-            _giveReceiptSem.Release();
-        }
 
-        public void FirstStationMessage(object obj)
+        public void SendFrameToSecond(object obj)
         {           
-            _post = (PostToSecondWT)obj;
-            _sendMessage = new BitArray(56);
-            for (int i = 0; i < 56; i++)
+            _postFrame = (PostDataToSecondBufferWt)obj;
+            _sentFrame = new BitArray(16);
+            for (int i = 0; i < 16; i++)
             {
                 if (i % 2 == 0)
-                    _sendMessage[i] = true;
+                    _sentFrame[i] = true;
                 else
-                    _sendMessage[i] = false;
+                    _sentFrame[i] = false;
             }
 
+            ConsoleHelper.WriteToConsole("станция 1", "начинаю работу.");
 
-            ConsoleHelper.WriteToConsole("1 станция", "Начинаю работу.");
+            _postFrame(_sentFrame);
 
+            ConsoleHelper.WriteToConsole("станция 1", "отправил кадр буферу 2");
+            _signalToSecondBuffer.Release();
 
-            _mainSemaphore.WaitOne();
-            if (_receivedMessage != null)
-            {                
-                ConsoleHelper.WriteToConsoleArray("1 станция полученные данные", _receivedMessage);
-                _receivedMesShown = true;
-
-                
-                _post(_sendMessage);
-                ConsoleHelper.WriteToConsole("1 станция", "Отправил данные.");
-
-                _askReceiptSem.Release();
-                
-
-                _askReceiptSem.WaitOne();
-                ConsoleHelper.WriteToConsoleArray("1 станция полученная квитанция", _receivedReceipt);
-                ConsoleHelper.WriteToConsole("1 станция", "Данные дошли до получателя.");
-                _askReceiptSem.Release();
-            }
-            else
-            {
-                
-                _post(_sendMessage);
-                ConsoleHelper.WriteToConsole("1 станция", "Отправил данные.");
-
-                _askReceiptSem.Release();
-                
-
-                _askReceiptSem.WaitOne();
-                ConsoleHelper.WriteToConsoleArray("1 станция полученная квитанция", _receivedReceipt);
-                ConsoleHelper.WriteToConsole("1 станция", "Данные дошли до получателя.");
-                _askReceiptSem.Release();
-
-                ConsoleHelper.WriteToConsole("1 станция", "Жду ответа.");
-            }
-            _mainSemaphore.Release();
-
-            _mainSemaphore.WaitOne();
-            if (_receivedMesShown == false)
-            {
-                ConsoleHelper.WriteToConsoleArray("1 станция полученные данные", _receivedMessage);
-            }
-            _mainSemaphore.Release();
+            _signalFromSecondBuffer.WaitOne();
+            ConsoleHelper.WriteToConsoleArray("станция 1 квитанция", _receivedReceipt);
 
 
-            ConsoleHelper.WriteToConsole("1 станция", "Завершаю работу.");
-        }
-        public void ReceiveData(BitArray array)
-        {
-            _receivedMessage = array;
+            ConsoleHelper.WriteToConsole("станция 1", "Завершаю работу.");
+
         }
 
-        public void ReceiveReceipt(BitArray array)
+        public void SendReceiptToFirstBuffer(Object obj)
         {
-            _receivedReceipt = array;
+            _postReceipt = (PostReceiptToFirstBufferWt)obj;
+            _sentReceipt = new BitArray(1);
+
+            ConsoleHelper.WriteToConsole("станция 1", "начинаю работу.");
+
+            _signalFromFirstBuffer.WaitOne();
+            ConsoleHelper.WriteToConsoleArray("станция 1 принятый кадр", _receivedFrame);
+            _sentReceipt[0] = true;
+            _postReceipt(_sentReceipt);
+            ConsoleHelper.WriteToConsole("станция 1", "отправил квитанцию буферу 1");
+            _signalToFirstBuffer.Release();
+
+            ConsoleHelper.WriteToConsole("станция 1", "Завершаю работу.");
+        }
+
+        public void ReceiveFrame(BitArray frame)
+        {
+            _receivedFrame = frame;
+        }
+
+        public void ReceiveReceipt(BitArray receipt)
+        {
+            _receivedReceipt = receipt;
+        }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        public static bool ValidData(BitArray frame)
+        {
+            BitArray receivedData = GetFrameData(frame);
+            BitArray expectedParity = GetExpectedFrameParity(frame);
+            BitArray receivedParity = CalculateFrameParity(receivedData);
+
+            for (int i = frame.Length - 1; i > frame.Length - 8; i--)
+            {
+                if (receivedParity[i] != expectedParity[i])
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+
+        public static BitArray GetExpectedFrameParity(BitArray frame)
+        {
+            BitArray parity = new BitArray(Frame.PARITYBLOCKBITSCOUNT);
+            for (int i = frame.Length - 1; i > frame.Length - 8; i--)
+            {
+                parity[i] = frame[i];
+            }
+
+            return parity;
+        }
+
+        public static BitArray CalculateFrameParity(BitArray receivedData)
+        {
+            BitArray calculatedParity = new BitArray(Frame.PARITYBLOCKBITSCOUNT);
+
+            for (int i = 0; i < 8; i++)
+            {
+                int columnBitsSum = 0;
+                for (int j = i; j < receivedData.Length; j += 8)
+                {
+                    if (receivedData[j] == true)
+                    {
+                        columnBitsSum += 1;
+                    }
+                }
+
+                if (columnBitsSum % 2 != 0)
+                {
+                    calculatedParity[i] = true;
+                }
+                else
+                {
+                    calculatedParity[i] = false;
+                }
+            }
+
+            return calculatedParity;
+        }
+
+        public static BitArray GetFrameData(BitArray _frame)
+        {
+            int dataSize = _frame.Length - Frame.DATASIZEBLOCKBITSCOUNT - Frame.PARITYBLOCKBITSCOUNT;
+            BitArray dataReceived = new BitArray(dataSize);
+
+            for (int i = 0; i < dataSize; i++)
+            {
+                dataReceived[i] = _frame[i];
+            }
+
+            return dataReceived;
         }
 
     }

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Text;
 using System.Threading;
 
@@ -53,22 +54,37 @@ namespace NetsLab1
 
         public void SendReceiptToSecondBuffer(Object obj)
         {
+            Stopwatch framesReceptionWatch = new Stopwatch();
             _postReceipt = (PostReceiptToSecondBufferWt)obj;
             _sentReceipt = new BitArray(1);
 
+            framesReceptionWatch.Start();
             _signalFromSecondBuffer.WaitOne();
-            for (int i = 0; i < _receivedFrames.Length; i++)
+            framesReceptionWatch.Stop();
+            TimeSpan framesReceptionTime = framesReceptionWatch.Elapsed;
+
+            if (framesReceptionTime.Milliseconds > 20)
             {
-                if (ValidData(_receivedFrames[i]) == true)
+                _sentReceipt[0] = false;
+                ConsoleHelper.WriteToConsole("станция 2", "Данные не получены");
+            }
+
+            else
+            {
+                _sentReceipt[0] = true;
+                for (int i = 0; i < _receivedFrames.Length; i++)
                 {
-                    ConsoleHelper.WriteToConsoleArray("станция 2 полученный кадр №" + i, _receivedFrames[i]);
-                }
-                else
-                {
-                    ConsoleHelper.WriteToConsole("станция 2 полученный кадр №" + i, "данные повреждены");
+                    if (ValidData(_receivedFrames[i]) == true)
+                    {
+                        ConsoleHelper.WriteToConsoleArray("станция 2 полученный кадр №" + i, _receivedFrames[i]);
+                    }
+                    else
+                    {
+                        ConsoleHelper.WriteToConsole("станция 2 полученный кадр №" + i, "данные повреждены");
+                    }
                 }
             }
-            _sentReceipt[0] = true;
+
             _postReceipt(_sentReceipt);
             ConsoleHelper.WriteToConsole("станция 2", "отправил квитанцию буферу 2");
             _signalToSecondBuffer.Release();

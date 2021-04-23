@@ -40,7 +40,7 @@ namespace NetsLab1
             _sentReceipt = new BitArray(1);
 
             _signalFromSecond.WaitOne();            
-            _sentReceipt[0] = true;
+            _sentReceipt[0] = _receivedReceipt[0];
             _postReceipt(_sentReceipt);
             ConsoleHelper.WriteToConsole("буфер 2", "отправил квитанцию станции 1");
             _signalToFirst.Release();

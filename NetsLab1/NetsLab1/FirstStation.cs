@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Text;
 using System.Threading;
 
@@ -57,22 +58,37 @@ namespace NetsLab1
 
         public void SendReceiptToFirstBuffer(Object obj)
         {
+            Stopwatch framesReceptionWatch = new Stopwatch();
             _postReceipt = (PostReceiptToFirstBufferWt)obj;
             _sentReceipt = new BitArray(1);
 
+            framesReceptionWatch.Start();
             _signalFromFirstBuffer.WaitOne();
-            for (int i = 0; i < _receivedFrames.Length; i++)
+            framesReceptionWatch.Stop();
+            TimeSpan framesReceptionTime = framesReceptionWatch.Elapsed;
+
+            if (framesReceptionTime.Milliseconds > 20)
             {
-                if (ValidData(_receivedFrames[i]) == true)
+                _sentReceipt[0] = false;
+                ConsoleHelper.WriteToConsole("станция 1", "Данные не получены");
+            }
+
+            else
+            {
+                _sentReceipt[0] = true;
+                for (int i = 0; i < _receivedFrames.Length; i++)
                 {
-                    ConsoleHelper.WriteToConsoleArray("станция 1 полученный кадр №" + i, _receivedFrames[i]);
-                }
-                else
-                {
-                    ConsoleHelper.WriteToConsole("станция 1 полученный кадр №" + i, "данные повреждены");
+                    if (ValidData(_receivedFrames[i]) == true)
+                    {
+                        ConsoleHelper.WriteToConsoleArray("станция 1 полученный кадр №" + i, _receivedFrames[i]);
+                    }
+                    else
+                    {
+                        ConsoleHelper.WriteToConsole("станция 1 полученный кадр №" + i, "данные повреждены");
+                    }
                 }
             }
-            _sentReceipt[0] = true;
+                      
             _postReceipt(_sentReceipt);
             ConsoleHelper.WriteToConsole("станция 1", "отправил квитанцию буферу 1");
             _signalToFirstBuffer.Release();

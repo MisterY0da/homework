@@ -9,7 +9,6 @@ namespace NetsLab1
     public class FirstBuffer
     {
         public const int FRAMESCOUNT = 3;
-        public BitArray[] framesArray = new BitArray[FRAMESCOUNT];
 
         private Semaphore _signalFromSecond;
         private Semaphore _signalToFirst;

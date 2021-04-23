@@ -63,7 +63,14 @@ namespace NetsLab1
             _signalFromFirstBuffer.WaitOne();
             for (int i = 0; i < _receivedFrames.Length; i++)
             {
-                ConsoleHelper.WriteToConsoleArray("станция 1 полученный кадр №" + i, _receivedFrames[i]);
+                if (ValidData(_receivedFrames[i]) == true)
+                {
+                    ConsoleHelper.WriteToConsoleArray("станция 1 полученный кадр №" + i, _receivedFrames[i]);
+                }
+                else
+                {
+                    ConsoleHelper.WriteToConsole("станция 1 полученный кадр №" + i, "данные повреждены");
+                }
             }
             _sentReceipt[0] = true;
             _postReceipt(_sentReceipt);
@@ -137,7 +144,7 @@ namespace NetsLab1
             BitArray expectedParity = GetExpectedFrameParity(frame);
             BitArray receivedParity = CalculateFrameParity(receivedData);
 
-            for (int i = frame.Length - 1; i > frame.Length - 8; i--)
+            for (int i = 0; i < receivedParity.Length; i++)
             {
                 if (receivedParity[i] != expectedParity[i])
                 {
@@ -152,9 +159,9 @@ namespace NetsLab1
         public static BitArray GetExpectedFrameParity(BitArray frame)
         {
             BitArray parity = new BitArray(Frame.PARITYBLOCKBITSCOUNT);
-            for (int i = frame.Length - 1; i > frame.Length - 8; i--)
+            for (int i = frame.Length - 8; i < frame.Length; i++)
             {
-                parity[i] = frame[i];
+                parity[i - (frame.Length - 8)] = frame[i];
             }
 
             return parity;

@@ -143,7 +143,7 @@ namespace NetsLab1
         public BitArray GenerateSomeData(int bitsCount)
         {
             BitArray someData = new BitArray(bitsCount);
-            for (int i = 0; i < 100; i++)
+            for (int i = 0; i < bitsCount; i++)
             {
                 if (i % 3 == 0 || i % 4 == 0)
                 {

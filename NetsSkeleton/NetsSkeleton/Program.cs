@@ -81,10 +81,10 @@ namespace NetsSkeleton
                     _sendMessage[i] = false;
             }
             _post(_sendMessage);
-            _sendSemaphore.Release();
+            //_sendSemaphore.Release();
             ConsoleHelper.WriteToConsole("1 поток", "Данные переданы");
             ConsoleHelper.WriteToConsole("1 поток", "Жду передачи данных");
-            _receiveSemaphore.WaitOne();
+            //_receiveSemaphore.WaitOne();
             ConsoleHelper.WriteToConsole("1 поток", "Данные получены.");
             ConsoleHelper.WriteToConsoleArray("1 поток", _receivedMessage);
             ConsoleHelper.WriteToConsole("1 поток", "Завершаю работу.");
@@ -114,7 +114,7 @@ namespace NetsSkeleton
         {
             _post = (PostToFirstWT)obj;
             ConsoleHelper.WriteToConsole("2 поток", "Начинаю работу.Жду передачи данных.");
-            _receiveSemaphore.WaitOne();
+            //_receiveSemaphore.WaitOne();
             ConsoleHelper.WriteToConsole("2 поток", "Данные полученны");
             ConsoleHelper.WriteToConsoleArray("2 поток", _receivedMessage);
             ConsoleHelper.WriteToConsole("2 поток", "Подготавливаю данные.");
@@ -127,7 +127,7 @@ namespace NetsSkeleton
                     _sendMessage[i] = true;
             }
             _post(_sendMessage);
-            _sendSemaphore.Release();
+            //_sendSemaphore.Release();
             ConsoleHelper.WriteToConsole("2 поток", "Данные переданы");
             ConsoleHelper.WriteToConsole("2 поток", "Заканчиваю работу");
 

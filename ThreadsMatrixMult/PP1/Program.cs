@@ -8,15 +8,14 @@ namespace PP1
     {
         static void Main(string[] args)
         {
-            MultithreadedMultiplication(500);
+            MultithreadedMultiplication(100);
 
-            SerialMultiplication(500);            
+            SerialMultiplication(100);            
         }
 
         static void MultithreadedMultiplication(int matrixSize)
         {
-            Stopwatch stopwatch = new Stopwatch();
-            stopwatch.Start();
+            
 
             int n = matrixSize;
             int[,] A = new int[n, n];
@@ -31,16 +30,23 @@ namespace PP1
 
             int[,] C = new int[n, n];
 
-            Thread[] threadsArray = new Thread[n];
+            int threadsCount = 4;
+            int rowsPerThread = n / threadsCount;
 
-            for (int i = 0; i < n; i++)
+            Thread[] threadsArray = new Thread[threadsCount];
+
+
+            Stopwatch stopwatch = new Stopwatch();
+            stopwatch.Start();
+            for (int threadInd = 0; threadInd < threadsCount; threadInd++)
             {
-                int rowIndex = i;
-                threadsArray[i] = new Thread(state => CalculateRow(A, B, C, rowIndex, n));
-                threadsArray[i].Start();
+                int startInd = threadInd * rowsPerThread;
+                int endInd = startInd + rowsPerThread - 1;
+                threadsArray[threadInd] = new Thread(state => CalculateRows(A, B, C, startInd, endInd, n));
+                threadsArray[threadInd].Start();
             }
-
             stopwatch.Stop();
+
 
             Console.WriteLine("\n");
             //printMatrix(C, n, n);            
@@ -51,8 +57,7 @@ namespace PP1
 
         static void SerialMultiplication(int matrixSize)
         {
-            Stopwatch stopwatch = new Stopwatch();
-            stopwatch.Start();
+            
 
             int n = matrixSize;
 
@@ -70,15 +75,15 @@ namespace PP1
             int [,]C = new int[n, n];
 
 
-            for (int i = 0; i < n; i++)
-            {
-                CalculateRow(A, B, C, i, n);
-            }
 
+            Stopwatch stopwatch = new Stopwatch();
+            stopwatch.Start();
+            CalculateRows(A, B, C, 0, n - 1, n);
             stopwatch.Stop();
-
+            
             Console.WriteLine("\n");
             //printMatrix(C, n, n);
+
 
             TimeSpan ts = stopwatch.Elapsed;
             Console.WriteLine("Serial multiplication time: " + ts.Milliseconds + "ms\n");
@@ -110,16 +115,20 @@ namespace PP1
             }
         }
 
-        static void CalculateRow(int[,] matrix1, int[,] matrix2, int[,] matrixProduct, int rowIndex, int rowLength)
+        static void CalculateRows(int[,] matrix1, int[,] matrix2, int[,] matrixProduct, int startIndex, int endIndex, int rowLength)
         {
-            for (int j = 0; j < rowLength; j++)
+
+            for (int rowIndex = startIndex; rowIndex <= endIndex; rowIndex++)
             {
-                int tempValue = 0;
-                for (int i = 0; i < rowLength; i++)
+                for (int j = 0; j < rowLength; j++)
                 {
-                    tempValue += matrix1[rowIndex, i] * matrix2[i, j];
+                    int tempValue = 0;
+                    for (int i = 0; i < rowLength; i++)
+                    {
+                        tempValue += matrix1[rowIndex, i] * matrix2[i, j];
+                    }
+                    matrixProduct[rowIndex, j] = tempValue;
                 }
-                matrixProduct[rowIndex, j] = tempValue;
             }
             
         }

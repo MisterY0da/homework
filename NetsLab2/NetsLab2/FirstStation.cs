@@ -80,11 +80,12 @@ namespace NetsLab2
                 {
                     if (ValidData(_receivedFrames[i]) == true)
                     {
-                        ConsoleHelper.WriteToConsoleArray("станция 1 полученный кадр №" + i % 8, GetFrameData(_receivedFrames[i]));
+                        ConsoleHelper.WriteToConsoleArray("станция 1 полученный кадр №" + FrameHelper.getIntFromBitArray(FrameHelper.GetBinaryFrameNumber(_receivedFrames[i])),
+                           FrameHelper.GetFrameData(_receivedFrames[i]));
                     }
                     else
                     {
-                        ConsoleHelper.WriteToConsole("станция 1 полученный кадр №" + i % 8, "данные повреждены");
+                        ConsoleHelper.WriteToConsole("станция 1 полученный кадр №" + FrameHelper.getIntFromBitArray(FrameHelper.GetBinaryFrameNumber(_receivedFrames[i])), "данные повреждены");
                     }
                 }
             }
@@ -150,7 +151,7 @@ namespace NetsLab2
 
             for(int frameInd = 0; frameInd < _sentFrames.Length; frameInd++)
             {
-                _sentFrames[frameInd] = FrameHelper.FillFrame(dataFragments[frameInd]);
+                _sentFrames[frameInd] = FrameHelper.FillFrame(dataFragments[frameInd], frameInd);
             }
         }
 
@@ -178,7 +179,7 @@ namespace NetsLab2
 
         public static bool ValidData(BitArray frame)
         {
-            BitArray receivedData = GetFrameData(frame);
+            BitArray receivedData = FrameHelper.GetFrameData(frame);
             BitArray expectedParity = GetExpectedFrameParity(frame);
             BitArray receivedParity = CalculateFrameParity(receivedData);
 
@@ -197,9 +198,10 @@ namespace NetsLab2
         public static BitArray GetExpectedFrameParity(BitArray frame)
         {
             BitArray parity = new BitArray(FrameHelper.PARITYBLOCKBITSCOUNT);
-            for (int i = frame.Length - 8; i < frame.Length; i++)
+            for (int i = frame.Length - FrameHelper.PARITYBLOCKBITSCOUNT - FrameHelper.FRAMENUMBERBLOCKBITSCOUNT; 
+                i < frame.Length - FrameHelper.FRAMENUMBERBLOCKBITSCOUNT; i++)
             {
-                parity[i - (frame.Length - 8)] = frame[i];
+                parity[i - (frame.Length - FrameHelper.PARITYBLOCKBITSCOUNT - FrameHelper.FRAMENUMBERBLOCKBITSCOUNT)] = frame[i];
             }
 
             return parity;
@@ -233,18 +235,7 @@ namespace NetsLab2
             return calculatedParity;
         }
 
-        public static BitArray GetFrameData(BitArray _frame)
-        {
-            int dataSize = _frame.Length - FrameHelper.DATASIZEBLOCKBITSCOUNT - FrameHelper.PARITYBLOCKBITSCOUNT;
-            BitArray dataReceived = new BitArray(dataSize);
-
-            for (int i = 0; i < dataSize; i++)
-            {
-                dataReceived[i] = _frame[i];
-            }
-
-            return dataReceived;
-        }
+        
 
     }
 }

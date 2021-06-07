@@ -9,12 +9,19 @@ namespace NetsLab2
     {        
         public const int DATASIZEBLOCKBITSCOUNT = 7;
         public const int PARITYBLOCKBITSCOUNT = 8;
+        public const int FRAMENUMBERBLOCKBITSCOUNT = 3;
 
-        public static BitArray FillFrame(BitArray data)
+        public static BitArray FillFrame(BitArray data, int frameNumber)
         {
-            BitArray binaryDataSize = DecimalToBinary(data.Length);
+            BitArray binaryDataSize = DecimalToBinary(data.Length, DATASIZEBLOCKBITSCOUNT);
             bool[] verticalParity = GetVerticalParity(data);
-            int frameLength = data.Length + binaryDataSize.Length + verticalParity.Length;
+            BitArray binaryFrameNumber = new BitArray(FRAMENUMBERBLOCKBITSCOUNT);
+            binaryFrameNumber = DecimalToBinary(frameNumber, FRAMENUMBERBLOCKBITSCOUNT);
+
+            int frameLength = data.Length + binaryDataSize.Length + verticalParity.Length + binaryFrameNumber.Length;
+
+            
+
             BitArray frame = new BitArray(frameLength);
 
             for (int i = 0; i < data.Length; i++)
@@ -33,12 +40,18 @@ namespace NetsLab2
                 frame[i] = verticalParity[i - data.Length - binaryDataSize.Length];
             }
 
+            for(int i = data.Length + binaryDataSize.Length + verticalParity.Length; 
+                i < data.Length + binaryDataSize.Length + verticalParity.Length + binaryFrameNumber.Length; i++)
+            {
+                frame[i] = binaryFrameNumber[i - data.Length - binaryDataSize.Length - verticalParity.Length];
+            }
+
             return frame;
         }
 
-        public static BitArray DecimalToBinary(int decimalNumber)
+        public static BitArray DecimalToBinary(int decimalNumber, int bitsCount)
         {
-            BitArray binaryNumber = new BitArray(DATASIZEBLOCKBITSCOUNT, false);
+            BitArray binaryNumber = new BitArray(bitsCount, false);
             for (int i = 0; i < binaryNumber.Length; i++)
             {
                 if (decimalNumber % 2 == 1)
@@ -49,6 +62,37 @@ namespace NetsLab2
             }
 
             return binaryNumber;
+        }
+
+        public static int getIntFromBitArray(BitArray bitArray)
+        {
+
+            int[] array = new int[1];
+
+            BitArray reversedBitArray = new BitArray(bitArray.Length);
+
+            for (int i = 0; i < bitArray.Length; i++)
+            {
+                reversedBitArray[i] = bitArray[(bitArray.Length - 1) - i];
+            }
+            reversedBitArray.CopyTo(array, 0);
+            return array[0];
+
+        }
+
+
+        public static BitArray GetBinaryFrameNumber(BitArray frame)
+        {
+            int startIndex = frame.Length - FRAMENUMBERBLOCKBITSCOUNT;
+
+            BitArray frameNumber = new BitArray(FRAMENUMBERBLOCKBITSCOUNT);
+
+            for(int i = 0; i < FRAMENUMBERBLOCKBITSCOUNT; i++)
+            {
+                frameNumber[i] = frame[startIndex + i];
+            }
+
+            return frameNumber;
         }
 
         public static bool[] GetVerticalParity(BitArray data)
@@ -76,6 +120,20 @@ namespace NetsLab2
             }
 
             return verticalParity;
+        }
+
+
+        public static BitArray GetFrameData(BitArray _frame)
+        {
+            int dataSize = _frame.Length - DATASIZEBLOCKBITSCOUNT - PARITYBLOCKBITSCOUNT - FRAMENUMBERBLOCKBITSCOUNT;
+            BitArray dataReceived = new BitArray(dataSize);
+
+            for (int i = 0; i < dataSize; i++)
+            {
+                dataReceived[i] = _frame[i];
+            }
+
+            return dataReceived;
         }
     }
 }

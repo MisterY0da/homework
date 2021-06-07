@@ -35,6 +35,13 @@ namespace NetsLab2
             _postFrames(_sentFrames);
             ConsoleHelper.WriteToConsole("буфер 1", "отправил кадры станции 1");
             _signalToFirstSt.Release();
+
+
+            _signalFromSecondSt.WaitOne();
+            _sentFrames = _receivedFrames;
+            _postFrames(_sentFrames);
+            ConsoleHelper.WriteToConsole("буфер 1", "отправил кадры станции 1");
+            _signalToFirstSt.Release();
         }
 
         public void ReceiveFrames(BitArray[] frames)

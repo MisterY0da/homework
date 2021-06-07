@@ -60,8 +60,6 @@ namespace NetsLab2
             forthThread.Start(postDataToFirstBufferWt);
             fifthThread.Start(postDataFromFirstBufWt);
             sixthThread.Start(postReceiptToSecondtStWt);
-                
-
 
             Console.ReadLine();
         }

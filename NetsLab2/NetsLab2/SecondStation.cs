@@ -9,6 +9,8 @@ namespace NetsLab2
 {
     public class SecondStation
     {
+        const int windowSize = 8;
+
         private Semaphore _mainSemaphore;
         private Semaphore _signalFromSecondBuffer;
         private Semaphore _signalToFirstBuffer;
@@ -17,7 +19,7 @@ namespace NetsLab2
 
     
 
-        private PostDataToFirstBufWt _postFrame;
+        private PostDataToFirstBufWt _postFrames;
         private BitArray[] _sentFrames;
         private BitArray _receivedReceipt;
 
@@ -41,15 +43,32 @@ namespace NetsLab2
             SplitDataOnFragments();
 
             _mainSemaphore.WaitOne();
-            _postFrame = (PostDataToFirstBufWt)obj;
-            
+            _postFrames = (PostDataToFirstBufWt)obj;
 
-            _postFrame(_sentFrames);
+            BitArray[] windowArray = new BitArray[windowSize];
+
+            Array.Copy(_sentFrames, 0, windowArray, 0, windowSize);
+
+            _postFrames(windowArray);
+
             ConsoleHelper.WriteToConsole("станция 2", "отправил кадры буферу 1");
             _signalToFirstBuffer.Release();
 
             _signalFromFirstSt.WaitOne();
             ConsoleHelper.WriteToConsoleArray("станция 2 полученная квитанция", _receivedReceipt);
+
+            windowArray = new BitArray[windowSize];
+
+            Array.Copy(_sentFrames, 8, windowArray, 0, windowSize);
+
+            _postFrames(windowArray);
+
+            ConsoleHelper.WriteToConsole("станция 2", "отправил кадры буферу 1");
+            _signalToFirstBuffer.Release();
+
+            _signalFromFirstSt.WaitOne();
+            ConsoleHelper.WriteToConsoleArray("станция 2 полученная квитанция", _receivedReceipt);
+
             _mainSemaphore.Release();
 
         }
@@ -65,7 +84,7 @@ namespace NetsLab2
             framesReceptionWatch.Stop();
             TimeSpan framesReceptionTime = framesReceptionWatch.Elapsed;
 
-            if (framesReceptionTime.Milliseconds > 20)
+            if (framesReceptionTime.Milliseconds > 40)
             {
                 _sentReceipt[0] = false;
                 ConsoleHelper.WriteToConsole("станция 2", "Данные не получены");
@@ -91,6 +110,44 @@ namespace NetsLab2
 
             _postReceipt(_sentReceipt);
             ConsoleHelper.WriteToConsole("станция 2", "отправил квитанцию станции 1");
+            _signalToFirstSt.Release();
+
+            Stopwatch framesReceptionWatch2 = new Stopwatch();
+            _sentReceipt = new BitArray(1);
+
+            framesReceptionWatch2.Start();
+
+            _signalFromSecondBuffer.WaitOne();
+            framesReceptionWatch2.Stop();
+            TimeSpan framesReceptionTime2 = framesReceptionWatch2.Elapsed;
+
+            if (framesReceptionTime2.Milliseconds > 20)
+            {
+                _sentReceipt[0] = false;
+                ConsoleHelper.WriteToConsole("станция 2", "Данные не получены");
+            }
+
+            else
+            {
+                _sentReceipt[0] = true;
+                for (int i = 0; i < _receivedFrames.Length; i++)
+                {
+                    if (ValidData(_receivedFrames[i]) == true)
+                    {
+                        ConsoleHelper.WriteToConsoleArray("станция 2 полученный кадр №" + FrameHelper.getIntFromBitArray(FrameHelper.GetBinaryFrameNumber(_receivedFrames[i])), 
+                            FrameHelper.GetFrameData(_receivedFrames[i]));
+                    }
+                    else
+                    {
+                        ConsoleHelper.WriteToConsole("станция 2 полученный кадр №" + FrameHelper.getIntFromBitArray(FrameHelper.GetBinaryFrameNumber(_receivedFrames[i])),
+                            "данные повреждены");
+                    }
+                }
+            }
+
+            _postReceipt(_sentReceipt);
+            ConsoleHelper.WriteToConsole("станция 2", "отправил квитанцию станции 1");
+
             _signalToFirstSt.Release();
         }
 

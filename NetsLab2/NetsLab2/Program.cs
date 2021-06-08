@@ -19,8 +19,10 @@ namespace NetsLab2
         {
             ConsoleHelper.WriteToConsole("Главный поток", "");
 
+            Semaphore connectionSem = new Semaphore(1, 1);
+            Semaphore disConnectionSem = new Semaphore(1, 1);
+            Semaphore transmissionSem = new Semaphore(1, 1);
 
-            Semaphore mainSemaphore = new Semaphore(1, 1);
             Semaphore firstStToSecondBuf = new Semaphore(0, 1);
             Semaphore secondBufToSecondSt = new Semaphore(0, 1);
             Semaphore secondStToFirstSt = new Semaphore(0, 1);
@@ -30,9 +32,11 @@ namespace NetsLab2
             Semaphore firstStToSecondSt = new Semaphore(0, 1);
 
 
-            FirstStation firstStation = new FirstStation(ref firstStToSecondBuf, ref firstBufToFirstSt, ref secondStToFirstSt, ref firstStToSecondSt, ref mainSemaphore);
+            FirstStation firstStation = new FirstStation(ref firstStToSecondBuf, ref firstBufToFirstSt, ref secondStToFirstSt, ref firstStToSecondSt, 
+                ref transmissionSem, ref connectionSem, ref disConnectionSem);
             FirstBuffer firstBuffer = new FirstBuffer(ref secondStToFirstBuf, ref firstBufToFirstSt);            
-            SecondStation secondStation = new SecondStation(ref secondBufToSecondSt, ref secondStToFirstBuf, ref firstStToSecondSt, ref secondStToFirstSt, ref mainSemaphore);
+            SecondStation secondStation = new SecondStation(ref secondBufToSecondSt, ref secondStToFirstBuf, ref firstStToSecondSt, ref secondStToFirstSt, 
+                ref transmissionSem, ref connectionSem, ref disConnectionSem);
             SecondBuffer secondBuffer = new SecondBuffer(ref firstStToSecondBuf, ref secondBufToSecondSt);
 
 

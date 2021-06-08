@@ -11,7 +11,9 @@ namespace NetsLab2
     {
         const int windowSize = 8;
 
-        private Semaphore _mainSemaphore;
+        private Semaphore _transmissionSem;
+        private Semaphore _connectionSem;
+        private Semaphore _disConnectionSem;
         private Semaphore _signalFromSecondBuffer;
         private Semaphore _signalToFirstBuffer;
         private Semaphore _signalFromFirstSt;
@@ -29,22 +31,40 @@ namespace NetsLab2
 
         public static bool frameIsMissed = false;
 
-        public SecondStation(ref Semaphore secondBufToSecondSt, ref Semaphore secondStToFirstBuf, 
-            ref Semaphore firstStToSecondSt, ref Semaphore secondStToFirstSt, ref Semaphore mainSemaphore)
+
+        public static bool wantsToConnect = false;
+
+        public static bool wantsToDisconnect = false;
+
+        public SecondStation(ref Semaphore secondBufToSecondSt, ref Semaphore secondStToFirstBuf, ref Semaphore firstStToSecondSt, 
+            ref Semaphore secondStToFirstSt, ref Semaphore transmissionSem, ref Semaphore connectionSem, ref Semaphore disConnectionSem)
         {           
             _signalFromSecondBuffer = secondBufToSecondSt;           
             _signalToFirstBuffer = secondStToFirstBuf;
             _signalFromFirstSt = firstStToSecondSt;
-            _signalToFirstSt = secondStToFirstSt;
-            
-            _mainSemaphore = mainSemaphore;
+            _signalToFirstSt = secondStToFirstSt;            
+            _transmissionSem = transmissionSem;
+            _connectionSem = connectionSem;
+            _disConnectionSem = disConnectionSem;
         }
 
         public void SendFramesToFirstBuf(object obj)
         {
-            SplitDataOnFragments();
+            _connectionSem.WaitOne();
+            wantsToConnect = true;
+            if (FirstStation.wantsToConnect == true)
+            {
+                ConsoleHelper.WriteToConsole("станция 2", "согласен на соединение");
+            }
+            else
+            {
+                ConsoleHelper.WriteToConsole("станция 2", "запрашиваю соединение");
+            }
+            _connectionSem.Release();
 
-            _mainSemaphore.WaitOne();
+            _transmissionSem.WaitOne();
+
+            SplitDataOnFragments();
 
             _postFrames = (PostDataToFirstBufWt)obj;
             SendPortionOfData(ref _sentFrames, ref _postFrames, 0, windowSize);
@@ -64,7 +84,20 @@ namespace NetsLab2
 
             ConsoleHelper.WriteToConsoleArray("станция 2 полученный RNR-ответ", _receivedReceipt);
 
-            _mainSemaphore.Release();
+            _transmissionSem.Release();
+
+
+            _disConnectionSem.WaitOne();
+            wantsToDisconnect = true;
+            if (FirstStation.wantsToDisconnect == true)
+            {
+                ConsoleHelper.WriteToConsole("станция 2", "согласен на разъединение");
+            }
+            else
+            {
+                ConsoleHelper.WriteToConsole("станция 2", "запрашиваю разъединение");
+            }
+            _disConnectionSem.Release();
 
         }
 

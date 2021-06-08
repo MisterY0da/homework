@@ -35,8 +35,19 @@ namespace NetsLab2
             ConsoleHelper.WriteToConsole("буфер 2", "отправил кадры станции 2");
             _signalToSecondSt.Release();
 
-
             _signalFromFirstSt.WaitOne();
+
+            if(SecondStation.frameIsMissed == true)
+            {
+                _sentFrames = _receivedFrames;
+                _postFrames(_sentFrames);
+                ConsoleHelper.WriteToConsole("буфер 2", "отправил кадры станции 2");
+                _signalToSecondSt.Release();
+
+                _signalFromFirstSt.WaitOne();
+            }
+
+            
             _sentFrames = _receivedFrames;
             _postFrames(_sentFrames);
             ConsoleHelper.WriteToConsole("буфер 2", "отправил кадры станции 2");

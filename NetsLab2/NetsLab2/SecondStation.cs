@@ -23,9 +23,11 @@ namespace NetsLab2
         private BitArray[] _sentFrames;
         private BitArray _receivedReceipt;
 
-        private PostReceiptToFirstStWt _postReceipt;
+        private SecondStPostToFirstStWt _postReceipt;
         private BitArray _sentReceipt;
         private BitArray[] _receivedFrames;
+
+        public static bool frameIsMissed = false;
 
         public SecondStation(ref Semaphore secondBufToSecondSt, ref Semaphore secondStToFirstBuf, 
             ref Semaphore firstStToSecondSt, ref Semaphore secondStToFirstSt, ref Semaphore mainSemaphore)
@@ -43,40 +45,42 @@ namespace NetsLab2
             SplitDataOnFragments();
 
             _mainSemaphore.WaitOne();
+
             _postFrames = (PostDataToFirstBufWt)obj;
-
-            BitArray[] windowArray = new BitArray[windowSize];
-
-            Array.Copy(_sentFrames, 0, windowArray, 0, windowSize);
-
-            _postFrames(windowArray);
-
+            SendPortionOfData(ref _sentFrames, ref _postFrames, 0, windowSize);
             ConsoleHelper.WriteToConsole("станция 2", "отправил кадры буферу 1");
+
             _signalToFirstBuffer.Release();
 
             _signalFromFirstSt.WaitOne();
-            ConsoleHelper.WriteToConsoleArray("станция 2 полученная квитанция", _receivedReceipt);
 
-            windowArray = new BitArray[windowSize];
-
-            Array.Copy(_sentFrames, 8, windowArray, 0, windowSize);
-
-            _postFrames(windowArray);
-
+            ConsoleHelper.WriteToConsoleArray("станция 2 полученный RR-ответ", _receivedReceipt);
+            SendPortionOfData(ref _sentFrames, ref _postFrames, windowSize, windowSize);
             ConsoleHelper.WriteToConsole("станция 2", "отправил кадры буферу 1");
+
             _signalToFirstBuffer.Release();
 
             _signalFromFirstSt.WaitOne();
-            ConsoleHelper.WriteToConsoleArray("станция 2 полученная квитанция", _receivedReceipt);
+
+            ConsoleHelper.WriteToConsoleArray("станция 2 полученный RNR-ответ", _receivedReceipt);
 
             _mainSemaphore.Release();
 
         }
 
+        public void SendPortionOfData(ref BitArray[] sentFrames, ref PostDataToFirstBufWt postFrames, int startSendingInd, int portionSize)
+        {
+            BitArray[] portion = new BitArray[portionSize];
+
+            Array.Copy(sentFrames, startSendingInd, portion, 0, portionSize);
+
+            postFrames(portion);
+        }
+
         public void SendReceiptToFirstSt(Object obj)
         {
             Stopwatch framesReceptionWatch = new Stopwatch();
-            _postReceipt = (PostReceiptToFirstStWt)obj;
+            _postReceipt = (SecondStPostToFirstStWt)obj;
             _sentReceipt = new BitArray(1);
 
             framesReceptionWatch.Start();
@@ -87,7 +91,7 @@ namespace NetsLab2
             if (framesReceptionTime.Milliseconds > 40)
             {
                 _sentReceipt[0] = false;
-                ConsoleHelper.WriteToConsole("станция 2", "Данные не получены");
+                ConsoleHelper.WriteToConsole("станция 2", "отправляю REJ-запрос");
             }
 
             else
@@ -95,7 +99,11 @@ namespace NetsLab2
                 _sentReceipt[0] = true;
                 for (int i = 0; i < _receivedFrames.Length; i++)
                 {
-                    if (ValidData(_receivedFrames[i]) == true)
+                    Random rnd = new Random();
+
+                    bool dataIsValid = (rnd.Next(1, 20) % 6) != 0;
+
+                    if (dataIsValid == true)
                     {
                         ConsoleHelper.WriteToConsoleArray("станция 2 полученный кадр №" + FrameHelper.getIntFromBitArray(FrameHelper.GetBinaryFrameNumber(_receivedFrames[i])), 
                             FrameHelper.GetFrameData(_receivedFrames[i]));
@@ -104,12 +112,28 @@ namespace NetsLab2
                     {
                         ConsoleHelper.WriteToConsole("станция 2 полученный кадр №" + FrameHelper.getIntFromBitArray(FrameHelper.GetBinaryFrameNumber(_receivedFrames[i])),
                             "данные повреждены");
+                        ConsoleHelper.WriteToConsole("станция 2", "отправляю REJ-запрос");
+                        frameIsMissed = true;
+                        _signalToFirstSt.Release();
+                        //_sentReceipt[0] = false;
+                        break;
                     }
                 }
             }
 
             _postReceipt(_sentReceipt);
-            ConsoleHelper.WriteToConsole("станция 2", "отправил квитанцию станции 1");
+
+            if (frameIsMissed == true)
+            {
+                _signalFromSecondBuffer.WaitOne();
+                for (int i = 0; i < _receivedFrames.Length; i++)
+                {
+                    ConsoleHelper.WriteToConsoleArray("станция 2 полученный кадр №" + FrameHelper.getIntFromBitArray(FrameHelper.GetBinaryFrameNumber(_receivedFrames[i])),
+                            FrameHelper.GetFrameData(_receivedFrames[i]));
+                }
+            }
+
+            ConsoleHelper.WriteToConsole("станция 2", "отправил RR-ответ станции 1");
             _signalToFirstSt.Release();
 
             Stopwatch framesReceptionWatch2 = new Stopwatch();
@@ -121,7 +145,7 @@ namespace NetsLab2
             framesReceptionWatch2.Stop();
             TimeSpan framesReceptionTime2 = framesReceptionWatch2.Elapsed;
 
-            if (framesReceptionTime2.Milliseconds > 20)
+            if (framesReceptionTime2.Milliseconds > 40)
             {
                 _sentReceipt[0] = false;
                 ConsoleHelper.WriteToConsole("станция 2", "Данные не получены");
@@ -146,7 +170,7 @@ namespace NetsLab2
             }
 
             _postReceipt(_sentReceipt);
-            ConsoleHelper.WriteToConsole("станция 2", "отправил квитанцию станции 1");
+            ConsoleHelper.WriteToConsole("станция 2", "отправил RNR-ответ станции 1");
 
             _signalToFirstSt.Release();
         }

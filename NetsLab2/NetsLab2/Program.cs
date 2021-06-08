@@ -4,14 +4,14 @@ using System.Threading;
 
 namespace NetsLab2
 {
-    public delegate void PostDataToSecondBufWt(BitArray[] frame);
-    public delegate void PostDataFromSecondBufWt(BitArray[] frame);
-    public delegate void PostReceiptToFirstStWt(BitArray receipt);
+    public delegate void PostDataToSecondBufWt(BitArray[] frames);
+    public delegate void PostDataFromSecondBufWt(BitArray[] frames);
+    public delegate void SecondStPostToFirstStWt(BitArray message);
 
 
-    public delegate void PostDataToFirstBufWt(BitArray[] frame);
-    public delegate void PostDataFromFirstBufWt(BitArray[] frame);
-    public delegate void PostReceiptToSecondStWt(BitArray receipt);
+    public delegate void PostDataToFirstBufWt(BitArray[] frames);
+    public delegate void PostDataFromFirstBufWt(BitArray[] frames);
+    public delegate void FirstStPostToSecondStWt(BitArray message);
 
     public class Program
     {
@@ -46,12 +46,12 @@ namespace NetsLab2
 
             PostDataToSecondBufWt postDataToSecondBufferWt = new PostDataToSecondBufWt(secondBuffer.ReceiveFrames);
             PostDataFromSecondBufWt postDataFromSecondBufWt = new PostDataFromSecondBufWt(secondStation.ReceiveFrames);
-            PostReceiptToFirstStWt postReceiptToFirstStWt = new PostReceiptToFirstStWt(firstStation.ReceiveReceipt);
+            SecondStPostToFirstStWt postReceiptToFirstStWt = new SecondStPostToFirstStWt(firstStation.ReceiveReceipt);
 
 
             PostDataToFirstBufWt postDataToFirstBufferWt = new PostDataToFirstBufWt(firstBuffer.ReceiveFrames);
             PostDataFromFirstBufWt postDataFromFirstBufWt = new PostDataFromFirstBufWt(firstStation.ReceiveFrames);
-            PostReceiptToSecondStWt postReceiptToSecondtStWt = new PostReceiptToSecondStWt(secondStation.ReceiveReceipt);
+            FirstStPostToSecondStWt postReceiptToSecondtStWt = new FirstStPostToSecondStWt(secondStation.ReceiveReceipt);
 
 
             firstThread.Start(postDataToSecondBufferWt);

@@ -19,3 +19,5 @@ class Dog: Animal
         println("Dog sleeps")
     }
 }
+
+

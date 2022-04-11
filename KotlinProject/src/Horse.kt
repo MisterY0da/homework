@@ -19,3 +19,5 @@ class Horse: Animal
         println("Horse sleeps")
     }
 }
+
+

@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.32228.343
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CleverenceTask1", "CleverenceTask1\CleverenceTask1.csproj", "{B9B8C40D-FE88-4E09-BE88-6F6E850B9CE9}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{B9B8C40D-FE88-4E09-BE88-6F6E850B9CE9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B9B8C40D-FE88-4E09-BE88-6F6E850B9CE9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B9B8C40D-FE88-4E09-BE88-6F6E850B9CE9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B9B8C40D-FE88-4E09-BE88-6F6E850B9CE9}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {9680BACB-4B58-48DF-8279-E5D38AE4C876}
+	EndGlobalSection
+EndGlobal

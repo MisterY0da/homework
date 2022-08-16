@@ -8,21 +8,21 @@ namespace CleverenceTask1
     public static class Server
     {
         static int count;
-        static object lockObject = new object();
+        static ReaderWriterLock readerWriterLock = new ReaderWriterLock();
 
         public static void GetCount()
         {
-            Console.WriteLine("Читатель прочитал count = " + count + "\t id потока: " + Thread.CurrentThread.ManagedThreadId);
+            readerWriterLock.AcquireReaderLock(Timeout.InfiniteTimeSpan);
+            Console.WriteLine("Reader threadId: " + Thread.CurrentThread.ManagedThreadId + "\tcount = " + count);
+            readerWriterLock.ReleaseReaderLock();
         }
 
         public static void AddToCount(int value)
         {
-            lock (lockObject)
-            {
-                count += value;
-            }
-
-            Console.WriteLine("Писатель прибавил " + value + "\t\t id потока: " + Thread.CurrentThread.ManagedThreadId + ", count = "  + count);
+            readerWriterLock.AcquireWriterLock(Timeout.InfiniteTimeSpan);
+            count += value;
+            Console.WriteLine("Writer threadId: " + Thread.CurrentThread.ManagedThreadId + "\tadded " + value);
+            readerWriterLock.ReleaseWriterLock();
         }
     }
 }

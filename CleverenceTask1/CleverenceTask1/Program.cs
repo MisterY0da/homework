@@ -27,7 +27,6 @@ namespace CleverenceTask1
             foreach(var th in clientsThreads)
             {
                 th.Start();
-                Thread.Sleep(10);
             }
            
             Thread.Sleep(2000);

@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="NSwag.AspNetCore" Version="13.16.1" />
+    <PackageReference Include="NSwag.MSBuild" Version="13.16.1">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+  <Target Name="GeneratNSwag" AfterTargets="Build" Condition="$(SkipSwagger) != 'true'">
+	<Exec EnvironmentVariables="ASPNETCORE_ENVIRONMENT=Development;" Command="$(NSwagExe_Core31) aspnetcore2openapi /project:&quot;$(MSBuildProjectFullPath)&quot; /nobuild:true /output:swagger.json /documentName:v1 /configuration:$(Configuration)" />
+  </Target>
+</Project>

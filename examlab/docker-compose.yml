@@ -1,0 +1,30 @@
+version: '3.4'
+
+networks:
+  services-network:
+    driver: bridge 
+
+services:
+  serviceone:
+    container_name: serviceone
+    image: serviceone:latest
+    depends_on:
+      - "servicetwo"
+    build:
+      context: serviceone
+      dockerfile: Dockerfile
+    environment:
+        - URL=http://servicetwo:80/
+    ports:
+      - "5050:80"
+    networks:
+      - services-network
+  
+  servicetwo:
+    container_name: servicetwo
+    image: servicetwo:latest
+    build:
+      context: servicetwo
+      dockerfile: Dockerfile    
+    networks:
+      - services-network

@@ -6,12 +6,19 @@ namespace Consumer.Services
 {
     public class KafkaConsumerService : BackgroundService
     {
+        private ILogger<KafkaConsumerService> _logger;
+
+        public KafkaConsumerService(ILogger<KafkaConsumerService> logger)
+        {
+            _logger = logger;
+        }
+
         protected override Task ExecuteAsync(CancellationToken stoppingToken)
         {
             var conf = new ConsumerConfig
             {
                 GroupId = "mygroup",
-                BootstrapServers = "localhost:9092",
+                BootstrapServers = "kafka:9092",
                 AutoOffsetReset = AutoOffsetReset.Earliest
             };
 
@@ -22,11 +29,11 @@ namespace Consumer.Services
                 try
                 {
                     var consumeResult = consumer.Consume();
-                    Console.WriteLine($"Received message: {consumeResult.Message.Value}");
+                    _logger.LogInformation($"message recieved from Kafka: {consumeResult.Message.Value}");
                 }
                 catch (ConsumeException e)
                 {
-                    Console.WriteLine($"Error occurred: {e.Error.Reason}");
+                    _logger.LogError($"Error occurred: {e.Error.Reason}");
                 }
             }
 

@@ -2,12 +2,24 @@
 
 namespace Producer.Services
 {
-    public class KafkaService : IKafkaService
+    public class KafkaService : BackgroundService
     {
+        private ILogger<KafkaService> _logger;
+
+        private static readonly string[] Fruits = new[]
+        {
+            "Apple", "Mandarin", "Banana", "Pineapple", "Pomegranate", "Peach", "Pear", "Kiwi"
+        };
+
         ProducerConfig config = new ProducerConfig
         {
-            BootstrapServers = "localhost:9092"
+            BootstrapServers = "kafka:9092"
         };
+
+        public KafkaService(ILogger<KafkaService> logger)
+        {
+            _logger = logger;
+        }
 
         public async Task SendMessageAsync(string message)
         {
@@ -16,13 +28,24 @@ namespace Producer.Services
                 try
                 {
                     var dr = await p.ProduceAsync("mytopic", new Message<Null, string> { Value = message });
-                    Console.WriteLine($"Delivered '{dr.Value}' to '{dr.TopicPartitionOffset}'");
+                    _logger.LogInformation($"message sent to Kafka: {message}");
                 }
                 catch (ProduceException<Null, string> e)
                 {
-                    Console.WriteLine($"Delivery failed: {e.Error.Reason}");
+                    _logger.LogError($"delivery failed: {e.Error.Reason}");
                 }
             }
+        }
+
+        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+        {
+            stoppingToken.ThrowIfCancellationRequested();
+
+            var rng = new Random();
+
+            var message = Fruits[rng.Next(Fruits.Length)];
+
+            await SendMessageAsync(message);
         }
     }
 }

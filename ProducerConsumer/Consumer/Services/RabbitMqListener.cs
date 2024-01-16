@@ -9,13 +9,15 @@ namespace Consumer.Services
     {
         private IConnection _connection;
         private IModel _channel;
+        private ILogger<RabbitMqListener> _logger;
 
-        public RabbitMqListener()
+        public RabbitMqListener(ILogger<RabbitMqListener> logger)
         {
-            var factory = new ConnectionFactory { HostName = "localhost" };
+            var factory = new ConnectionFactory { HostName = "host.docker.internal" };
             _connection = factory.CreateConnection();
             _channel = _connection.CreateModel();
             _channel.QueueDeclare(queue: "myqueue", durable: false, exclusive: false, autoDelete: false, arguments: null);
+            _logger = logger;
         }
 
         protected override Task ExecuteAsync(CancellationToken stoppingToken)
@@ -27,7 +29,7 @@ namespace Consumer.Services
             {
                 var content = Encoding.UTF8.GetString(ea.Body.ToArray());
 
-                Debug.WriteLine($"Получено сообщение: {content}");
+                _logger.LogInformation($"message recieved from RabbitMQ: {content}");
 
                 _channel.BasicAck(ea.DeliveryTag, false);
             };

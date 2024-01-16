@@ -1,22 +1,28 @@
-﻿using Microsoft.AspNetCore.Connections;
-using System.Text.Json;
-using System.Text;
+﻿using System.Text;
 using RabbitMQ.Client;
+using IConnectionFactory = RabbitMQ.Client.IConnectionFactory;
 
 namespace Producer.Services
 {
-    public class RabbitMqService : IRabbitMqService
+    public class RabbitMqService : BackgroundService
     {
-        public void SendMessage(object obj)
+        private IConnectionFactory _factory;
+        private ILogger<RabbitMqService> _logger;
+
+        private static readonly string[] Summaries = new[]
         {
-            var message = JsonSerializer.Serialize(obj);
-            SendMessage(message);
+            "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
+        };
+
+        public RabbitMqService(ILogger<RabbitMqService> logger) 
+        {
+            _factory = new ConnectionFactory() { HostName = "host.docker.internal" };
+            _logger = logger;
         }
 
         public void SendMessage(string message)
         {
-            var factory = new ConnectionFactory() { HostName = "localhost" };
-            using (var connection = factory.CreateConnection())
+            using (var connection = _factory.CreateConnection())
             using (var channel = connection.CreateModel())
             {
                 channel.QueueDeclare(queue: "myqueue",
@@ -31,7 +37,22 @@ namespace Producer.Services
                                routingKey: "myqueue",
                                basicProperties: null,
                                body: body);
+
+                _logger.LogInformation($"message sent to RabbitMQ: {message}");
             }
+        }
+
+        protected override Task ExecuteAsync(CancellationToken stoppingToken)
+        {
+            stoppingToken.ThrowIfCancellationRequested();
+
+            var rng = new Random();
+
+            var message = Summaries[rng.Next(Summaries.Length)];
+
+            SendMessage(message);
+
+            return Task.CompletedTask;
         }
     }
 }

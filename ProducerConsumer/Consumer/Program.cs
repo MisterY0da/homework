@@ -1,4 +1,5 @@
 using Consumer.Services;
+using Prometheus;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -17,6 +18,7 @@ app.UseSwagger();
 app.UseSwaggerUI();
 
 app.UseAuthorization();
+app.UseMetricServer();
 
 app.MapControllers();
 

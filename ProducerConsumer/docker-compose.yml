@@ -34,7 +34,7 @@ services:
         condition: service_healthy
 
   RabbitMQ:
-    container_name: rabbitmqq
+    container_name: rabbitmq
     image: rabbitmq:3-management
     ports:
     - "5672:5672"

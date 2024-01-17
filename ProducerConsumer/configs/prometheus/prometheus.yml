@@ -2,10 +2,10 @@ global:
   scrape_interval: 15s
 
 scrape_configs:
-  - job_name: 'producer'
+  - job_name: 'Producer'
     static_configs:
-      - targets: ['host.docker.internal:8082']
+      - targets: ['host.docker.internal:5050']
 
-  - job_name: 'consumer'
+  - job_name: 'Consumer'
     static_configs:
-      - targets: ['host.docker.internal:8081']
+      - targets: ['host.docker.internal:5051']

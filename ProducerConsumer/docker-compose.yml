@@ -12,7 +12,7 @@ services:
       context: Consumer
       dockerfile: Dockerfile
     ports:
-      - "8081:80"
+      - "5051:80"
     networks:
       - services-network
     depends_on:
@@ -26,7 +26,7 @@ services:
       context: Producer
       dockerfile: Dockerfile
     ports:
-      - "8082:80"
+      - "5050:80"
     networks:
       - services-network
     depends_on:
@@ -34,13 +34,18 @@ services:
         condition: service_healthy
 
   RabbitMQ:
-    container_name: rabbitmq
+    container_name: rabbitmqq
     image: rabbitmq:3-management
     ports:
     - "5672:5672"
     - "15672:15672"
     networks:
     - services-network
+    healthcheck:
+      test: ["CMD", "rabbitmqctl", "status"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
 
   zookeeper:
     image: wurstmeister/zookeeper

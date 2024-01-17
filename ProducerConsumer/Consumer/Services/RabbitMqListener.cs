@@ -13,7 +13,7 @@ namespace Consumer.Services
 
         public RabbitMqListener(ILogger<RabbitMqListener> logger)
         {
-            var factory = new ConnectionFactory { HostName = "host.docker.internal" };
+            var factory = new ConnectionFactory { HostName = "rabbitmq" };
             _connection = factory.CreateConnection();
             _channel = _connection.CreateModel();
             _channel.QueueDeclare(queue: "myqueue", durable: false, exclusive: false, autoDelete: false, arguments: null);

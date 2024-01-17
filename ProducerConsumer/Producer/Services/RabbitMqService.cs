@@ -16,7 +16,7 @@ namespace Producer.Services
 
         public RabbitMqService(ILogger<RabbitMqService> logger) 
         {
-            _factory = new ConnectionFactory() { HostName = "host.docker.internal" };
+            _factory = new ConnectionFactory() { HostName = "rabbitmq" };
             _logger = logger;
         }
 
